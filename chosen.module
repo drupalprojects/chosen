@@ -34,7 +34,7 @@ function chosen_init() {
 function chosen_menu() {
   $items = array();
 
-  $items['admin/config/user-interface/chosen'] = array(
+  $items['admin/settings/chosen'] = array(
     'title' => 'Chosen',
     'description' => 'Configuration for Chosen plugin',
     'page callback' => 'drupal_get_form',

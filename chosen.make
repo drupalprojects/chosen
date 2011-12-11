@@ -1,4 +1,4 @@
-core = 7.x
+core = 6.x
 api  = 2
 
 libraries[chosen][download][type] = git
