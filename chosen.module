@@ -18,6 +18,43 @@ define('CHOSEN_WEBSITE_URL', 'http://harvesthq.github.com/chosen');
 define('CHOSEN_WIDGETS', serialize(array('options_select', 'date_select')));
 
 /**
+ * Implements hook_init().
+ */
+function chosen_init() {
+  ctools_include('plugins');
+  foreach (ctools_get_plugins('chosen', 'library') as $plugin => $plugin_settings) {
+    if (empty($plugin)) {
+      continue;
+    }
+    $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin, 'class');
+    $plugin = new $plugin_class_name();
+    dsm($plugin->library());
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function chosen_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'chosen' && !empty($plugin)) {
+    return "plugins/$plugin";
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function chosen_ctools_plugin_type() {
+  $plugins['library'] = array(
+    'cache' => FALSE,
+    'use hooks' => FALSE,
+    'classes' => array('class'),
+  );
+
+  return $plugins;
+}
+
+/**
  * Implements hook_menu().
  */
 function chosen_menu() {

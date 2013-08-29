@@ -4,3 +4,6 @@ configure = admin/config/user-interface/chosen
 core = 7.x
 
 dependencies[] = jquery_update
+dependencies[] = ctools
+
+files[] = chosen_library_interface.inc
