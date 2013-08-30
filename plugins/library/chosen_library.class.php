@@ -14,7 +14,11 @@ class chosen_library implements chosen_library_interface {
   public $css = 'chosen.css';
 
 
-  public function options($default_values) {
+  public function widgets() {
+
+  }
+
+  public function options($default_values = array()) {
     $form = array();
     // dsm($default_values);
 
@@ -91,20 +95,20 @@ class chosen_library implements chosen_library_interface {
   $form['strings']['placeholder_text_multiple'] = array(
     '#type' => 'textfield',
     '#title' => t('Placeholder text of multiple selects'),
-    '#required' => isset($default_values['placeholder_text_multiple']) ? $default_values['placeholder_text_multiple'] : TRUE,
-    '#default_value' => 'Choose some options',
+    '#required' => TRUE,
+    '#default_value' => isset($default_values['placeholder_text_multiple']) ? $default_values['placeholder_text_multiple'] : 'Choose some options',
   );
   $form['strings']['placeholder_text_single'] = array(
     '#type' => 'textfield',
     '#title' => t('Placeholder text of single selects'),
-    '#required' => isset($default_values['placeholder_text_single']) ? $default_values['placeholder_text_single'] : TRUE,
-    '#default_value' => 'Choose an option',
+    '#required' => TRUE,
+    '#default_value' => isset($default_values['placeholder_text_single']) ? $default_values['placeholder_text_single'] : 'Choose an option',
   );
   $form['strings']['no_results_text'] = array(
     '#type' => 'textfield',
     '#title' => t('No results text'),
-    '#required' => isset($default_values['no_results_text']) ? $default_values['no_results_text'] : TRUE,
-    '#default_value' => 'No results match',
+    '#required' => TRUE,
+    '#default_value' => isset($default_values['no_results_text']) ? $default_values['no_results_text'] : 'No results match',
   );
 
     return $form;

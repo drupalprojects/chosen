@@ -14,7 +14,7 @@ class select2_library implements chosen_library_interface {
   public $css = 'select2.css';
 
 
-  public function options($default_values) {
+  public function options($default_values = array()) {
     $form = array();
 
 

@@ -17,33 +17,15 @@ define('CHOSEN_WEBSITE_URL', 'http://harvesthq.github.com/chosen');
  */
 define('CHOSEN_WIDGETS', serialize(array('options_select', 'date_select')));
 
-/**
- * Implements hook_init().
- */
-function chosen_init() {
-  // ctools_include('plugins');
-  // foreach (ctools_get_plugins('chosen', 'library') as $plugin => $plugin_settings) {
-  //   if (empty($plugin)) {
-  //     continue;
-  //   }
-  //   $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin, 'class');
-  //   // dsm($plugin_class_name);
-  //   // $plugin = new $plugin_class_name();
-  //   // dsm($plugin->library());
-  // }
-}
-
 function chosen_form_chosen_admin_settings_alter(&$form, &$form_state, $form_id) {
   unset($form['#submit']);
   $form['#submit'][] = 'chosen_admin_settings_form_submit';
 }
 
-function chosen_admin_settings_form_submit($form, &$form_state) {
-  // Exclude unnecessary elements.
-  form_state_values_clean($form_state);
-
+function _chosen_devide_array_by_plugin($flat_array) {
   $values = array();
-  foreach ($form_state['values'] as $key => $value) {
+
+  foreach ($flat_array as $key => $value) {
     foreach (ctools_get_plugins('chosen', 'library') as $plugin_name => $plugin_settings) {
       if(substr($key, 0, strlen($plugin_name)) == $plugin_name) {
         $field_name = substr($key, strlen($plugin_name) + 1);
@@ -51,11 +33,19 @@ function chosen_admin_settings_form_submit($form, &$form_state) {
       }
     }
   }
+  return $values;
+}
 
-  // // Save values by plugin.
-  // foreach ($values as $plugin_name => $values) {
-  //   variable_set('chosen_' . $plugin_name, $values);
-  // }
+function chosen_admin_settings_form_submit($form, &$form_state) {
+  // Exclude unnecessary elements.
+  form_state_values_clean($form_state);
+  dsm($form_state['values']);
+  $values = _chosen_devide_array_by_plugin($form_state['values']);
+
+  // Save values by plugin.
+  foreach ($values as $plugin_name => $values) {
+    variable_set('chosen_' . $plugin_name, $values);
+  }
 
   drupal_set_message(t('The configuration options have been saved.'));
 }
@@ -119,17 +109,17 @@ function chosen_form_field_ui_field_edit_form_alter(&$form, $form_state) {
  *
  * A list of settings needed by Chosen module for widgets.
  */
-function chosen_field_widget_info_alter(&$info) {
-  $settings = array(
-    'apply_chosen' => 0,
-  );
+// function chosen_field_widget_info_alter(&$info) {
+//   $settings = array(
+//     'apply_chosen' => 0,
+//   );
 
-  foreach (unserialize(CHOSEN_WIDGETS) as $widget) {
-    if (isset($info[$widget]['settings'])) {
-      $info[$widget]['settings'] += $settings;
-    }
-  }
-}
+//   foreach (unserialize(CHOSEN_WIDGETS) as $widget) {
+//     if (isset($info[$widget]['settings'])) {
+//       $info[$widget]['settings'] += $settings;
+//     }
+//   }
+// }
 
 /**
  * Implements hook_field_widget_settings_form().
@@ -146,21 +136,54 @@ function chosen_field_widget_settings_form($field, $instance) {
     '#parents' => array('instance', 'widget', 'settings'),
   );
 
-  $chosen_path = chosen_get_chosen_path();
-  if ($chosen_path) {
-    $form['chosen']['apply_chosen'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Apply Chosen on this field'),
-      '#default_value' => isset($settings['apply_chosen']) ? $settings['apply_chosen'] : FALSE,
-    );
-  }
-  else {
-    $form['chosen']['chosen_library_missing'] = array(
-      '#markup' => t('The library could not be detected. You need to download the !chosen and extract the entire contents of the archive into the %path directory on your server.', array('!chosen' => l(t('Chosen JavaScript file'), CHOSEN_WEBSITE_URL), '%path' => 'sites/all/libraries')),
-    );
-  }
+  $form['chosen']['apply_chosen'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Apply Chosen on this field'),
+    '#default_value' => isset($settings['apply_chosen']) ? $settings['apply_chosen'] : FALSE,
+  );
+  $form['chosen']['override'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override chosen default settings'),
+    '#default_value' => isset($settings['override']) ? $settings['override'] : FALSE,
+  );
+
+
+  $form['chosen']['chosen_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Chosen settings'),
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
+    '#weight' => 20,
+    '#states' => array(
+        'visible' => array(
+          ':input[name="instance[widget][settings][override]"]' => array('checked' => TRUE),
+        ),
+      ),
+  );
+
+  $default_values = _chosen_flattern_default_values($instance['chosen_wrapper']);
+  $default_values = _chosen_devide_array_by_plugin($default_values);
+  $settings_form = chosen_generate_forms($default_values);
+  // $form = array_merge($form, $settings_form);
+
+  $form['chosen']['chosen_wrapper'] += $settings_form;
+
 
   return $form;
+}
+
+function _chosen_flattern_default_values($default_values) {
+  $flattern_values = array();
+  foreach($default_values as $key => $value) {
+    if(!is_array($value)) {
+      $flattern_values[$key] = $value; // value
+    }
+    else {
+      $flattern_values = array_merge($flattern_values, _chosen_flattern_default_values($value));
+    }
+  }
+
+  return $flattern_values;
 }
 
 /**
@@ -183,70 +206,94 @@ function chosen_library() {
 
   ctools_include('plugins');
 
+  foreach (ctools_get_plugins('chosen', 'library') as $plugin_name => $plugin_settings) {
+    $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin_name, 'class');
+    $plugin = new $plugin_class_name();
+    dsm($plugin->file_name);
 
-  $plugin_name = variable_get('chosen_active_plugin', 'chosen');
-  $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin_name, 'class');
-  $plugin = new $plugin_class_name();
-  dsm($plugin->file_name);
-
-  $library_path = module_exists('libraries') ? libraries_get_path($plugin->library_name) : 'sites/all/libraries/' . $plugin->directory;
-
-
-
-  $info[$plugin->library_name] = array(
-    'title' => $plugin->title,
-    'website' => $plugin->website,
-    'version' => $plugin->version,
-    'js' => array(
-      $library_path . '/' . $plugin->file_name => array('group' => 'JS_LIBRARY'),
-    ),
-  );
-
-  // TODO: Make css optional and make it possible to have multiple css files attached.
-  //       Perhaps it would make sense to allow multiple js files too?
-  if (variable_get('chosen_use_theme', TRUE)) {
-    $info['chosen']['css'] = array($library_path . '/' . $plugin->css => array());
-  }
+    $library_path = module_exists('libraries') ? libraries_get_path($plugin->library_name) : 'sites/all/libraries/' . $plugin->directory;
 
 
 
-
-  $module_path = drupal_get_path('module', 'chosen');
-  $info['drupal.chosen'] = array(
-    'title' => 'Drupal Chosen integration',
-    'website' => 'http://drupal.org/project/chosen',
-    'version' => '1.0',
-    'js' => array(
-      $module_path . '/chosen.js' => array(),
-      array(
-        // TODO: get settings form plugin.
-        'data' => array(
-          'chosen' => array(
-            'selector' => variable_get('chosen_jquery_selector', 'select:visible'),
-            'minimum_single' => variable_get('chosen_minimum_single', 20),
-            'minimum_multiple' => variable_get('chosen_minimum_multiple', 20),
-            'minimum_width' => variable_get('chosen_minimum_width', 200),
-            'search_contains' => (variable_get('chosen_search_contains', FALSE)) ? TRUE : FALSE,
-            'disable_search' => (variable_get('chosen_disable_search', FALSE)) ? TRUE : FALSE,
-            'disable_search_threshold' => variable_get('chosen_disable_search_threshold', 0),
-            'placeholder_text_multiple' => variable_get('chosen_placeholder_text_multiple', t('Choose some options')),
-            'placeholder_text_single' => variable_get('chosen_placeholder_text_single', t('Choose an option')),
-            'no_results_text' => variable_get('chosen_no_results_text', t('No results match')),
-          ),
-        ),
-        'type' => 'setting',
+    $info[$plugin->library_name] = array(
+      'title' => $plugin->title,
+      'website' => $plugin->website,
+      'version' => $plugin->version,
+      'js' => array(
+        $library_path . '/' . $plugin->file_name => array('group' => 'JS_LIBRARY'),
       ),
-    ),
-    'css' => array(
-      // TODO: Not sure about that.
-      $module_path . '/css/chosen-drupal.css' => array(),
-    ),
-    'dependencies' => array(
-      array('chosen', $plugin->library_name),
-    ),
-  );
+    );
 
+    // TODO: Make css optional and make it possible to have multiple css files attached.
+    //       Perhaps it would make sense to allow multiple js files too?
+    if (variable_get('chosen_use_theme', TRUE)) {
+      $info['chosen']['css'] = array($library_path . '/' . $plugin->css => array());
+    }
+
+    $values = array();
+    $value = variable_get('chosen_' . $plugin_name);
+    if(!empty($value)) {
+      $values = variable_get('chosen_' . $plugin_name);
+    }
+    else {
+      $options = _chosen_flattern_options($plugin->options());
+      foreach($options as $key => $value) {
+        // TODO: recursiv.
+        $values[$key] = $value['#default_value'];
+      }
+    }
+    dsm($values);
+
+
+    $module_path = drupal_get_path('module', 'chosen');
+    $info['drupal.' . $plugin_name] = array(
+      'title' => 'Drupal Chosen integration',
+      'website' => 'http://drupal.org/project/chosen',
+      'version' => '1.0',
+      'js' => array(
+        $module_path . '/chosen.js' => array(),
+        array(
+          // TODO: get settings form plugin.
+          'data' => array(
+            'chosen' => array(
+              'selector' => variable_get('chosen_jquery_selector', 'select:visible'),
+              'minimum_single' => variable_get('chosen_minimum_single', 20),
+              'minimum_multiple' => variable_get('chosen_minimum_multiple', 20),
+              'minimum_width' => variable_get('chosen_minimum_width', 200),
+              'search_contains' => (variable_get('chosen_search_contains', FALSE)) ? TRUE : FALSE,
+              'disable_search' => (variable_get('chosen_disable_search', FALSE)) ? TRUE : FALSE,
+              'disable_search_threshold' => variable_get('chosen_disable_search_threshold', 0),
+              'placeholder_text_multiple' => t(variable_get('chosen_placeholder_text_multiple', 'Choose some options')),
+              'placeholder_text_single' => t(variable_get('chosen_placeholder_text_single', 'Choose an option')),
+              'no_results_text' => t(variable_get('chosen_no_results_text', 'No results match')),
+            ),
+          ),
+          'type' => 'setting',
+        ),
+      ),
+      'css' => array(
+        // TODO: Not sure about that.
+        $module_path . '/css/chosen-drupal.css' => array(),
+      ),
+      'dependencies' => array(
+        array('chosen', $plugin->library_name),
+      ),
+    );
+    }
   return $info;
+}
+
+function _chosen_flattern_options($options) {
+  $flat_array = array();
+  foreach ($options as $key => $value) {
+    if(isset($value['#default_value'])) {
+      $flat_array[$key] = $value;
+    }
+    elseif(is_array($value)) {
+      $flat_array = array_merge($flat_array, _chosen_flattern_options($value));
+    }
+  }
+  return $flat_array;
 }
 
 /**
@@ -316,3 +363,73 @@ function chosen_get_chosen_path() {
   }
   return $path;
 }
+
+
+
+function chosen_generate_forms($default_values) {
+
+  ctools_include('plugins');
+    foreach (ctools_get_plugins('chosen', 'library') as $plugin => $plugin_settings) {
+    $chosen_plugins[$plugin] = $plugin_settings['name'];
+    $chosen_descriptions[$plugin] = $plugin_settings['description'];
+  }
+
+    $form['chosen_plugin'] = array(
+      '#type' => 'select',
+      '#title' => t('Select library chosen should use'),
+      '#options' => $chosen_plugins,
+      '#default_value' => isset($default_values['chosen']['plugin']) ? $default_values['chosen']['plugin'] : 'chosen',
+      '#description' => $chosen_descriptions[variable_get('chosen_active_plugin', 'chosen')],
+      '#weight' => 20,
+    );
+
+
+  foreach (ctools_get_plugins('chosen', 'library') as $plugin_name => $plugin_settings) {
+    $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin_name, 'class');
+    $plugin = new $plugin_class_name();
+
+    // dsm($default_values);
+    $form[$plugin_name] = array(
+      '#type' => 'fieldset',
+      '#title' => t($plugin_settings['name'] . ' options'),
+      '#states' => array(
+        'visible' => array(
+          'select[name="chosen_plugin"]' => array('value' => $plugin_name),
+          'select[name="instance[widget][settings][chosen_wrapper][chosen_plugin]"]' => array('value' => $plugin_name),
+        ),
+      ),
+    );
+
+    // TODO: attach default values (existing values).
+    // TODO: Add prefix.
+    // TODO: Save values per plugin in a single variable.
+    $fields = _chosen_add_plugin_prefix($plugin->options($default_values[$plugin_name]), $plugin_name);
+    foreach ($fields as $option => $values) {
+      // Iterate through $values, check if it has ?
+      $form[$plugin_name][$option] = $values;
+      $form[$plugin_name]['#weight'] = 21;
+    }
+  }
+  return $form;
+}
+
+
+function _chosen_add_plugin_prefix($array, $plugin_name) {
+  foreach ($array as $key => $value) {
+    if (isset($value['#default_value'])) {
+      // Is field.
+      $new_array[$plugin_name . '_' . $key] = $value;
+    }
+    else if (!is_array($value)) {
+      // Is value.
+      $new_array[$key] = $value;
+    }
+    else {
+      // Is child.
+      $new_array[$key] = _chosen_add_plugin_prefix($value, $plugin_name);
+    }
+  }
+
+  return $new_array;
+}
+
