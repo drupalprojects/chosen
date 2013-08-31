@@ -17,11 +17,82 @@ define('CHOSEN_WEBSITE_URL', 'http://harvesthq.github.com/chosen');
  */
 define('CHOSEN_WIDGETS', serialize(array('options_select', 'date_select')));
 
+/**
+ * Implements hook_ctools_plugin_directory().
+ *
+ * @see hook_ctools_plugin_directory
+ */
+function chosen_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'chosen' && !empty($plugin)) {
+    return "plugins/$plugin";
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ *
+ * @see hook_ctools_plugin_type
+ */
+function chosen_ctools_plugin_type() {
+  $plugins['library'] = array(
+    'cache' => FALSE,
+    'use hooks' => FALSE,
+    'classes' => array('class'),
+  );
+
+  return $plugins;
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Override chosen_admin_settings submit callback with custom
+ * chosen_admin_settings_form_submit() function.
+ *
+ * @see hook_form_FORM_ID_alter
+ */
 function chosen_form_chosen_admin_settings_alter(&$form, &$form_state, $form_id) {
   unset($form['#submit']);
   $form['#submit'][] = 'chosen_admin_settings_form_submit';
 }
 
+/**
+ * Implementation of chosen_admin_settings_form_submit().
+ *
+ * Callback function for chosen_admin_settings().
+ * Save the submitted values by plugin type.
+ *
+ * @see settings_form_submit
+ * @see _chosen_devide_array_by_plugin
+ */
+function chosen_admin_settings_form_submit($form, &$form_state) {
+  // Exclude unnecessary elements.
+  form_state_values_clean($form_state);
+
+  $values = _chosen_devide_array_by_plugin($form_state['values']);
+
+  // Save values by plugin.
+  foreach ($values as $plugin_name => $values) {
+    variable_set('chosen_' . $plugin_name, $values);
+  }
+
+  drupal_set_message(t('The configuration options have been saved.'));
+}
+
+/**
+ * Implementation of _chosen_devide_array_by_plugin().
+ *
+ * Helperfunction to seperate fields by plugin_name.
+ *
+ * @param $flat_array
+ *    Array containing a flat array. The keys needs to contain the plugin_name
+ *    in front of the original key. It will be stripped of in this process.
+ *
+ * @return $values
+ *    Array containing the flat elements, sorted by plugin_name without the
+ *    plugin_name in front of the key anymore.
+ */
 function _chosen_devide_array_by_plugin($flat_array) {
   $values = array();
 
@@ -34,42 +105,6 @@ function _chosen_devide_array_by_plugin($flat_array) {
     }
   }
   return $values;
-}
-
-function chosen_admin_settings_form_submit($form, &$form_state) {
-  // Exclude unnecessary elements.
-  form_state_values_clean($form_state);
-  dsm($form_state['values']);
-  $values = _chosen_devide_array_by_plugin($form_state['values']);
-
-  // Save values by plugin.
-  foreach ($values as $plugin_name => $values) {
-    variable_set('chosen_' . $plugin_name, $values);
-  }
-
-  drupal_set_message(t('The configuration options have been saved.'));
-}
-
-/**
- * Implements hook_ctools_plugin_directory().
- */
-function chosen_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'chosen' && !empty($plugin)) {
-    return "plugins/$plugin";
-  }
-}
-
-/**
- * Implements hook_ctools_plugin_type().
- */
-function chosen_ctools_plugin_type() {
-  $plugins['library'] = array(
-    'cache' => FALSE,
-    'use hooks' => FALSE,
-    'classes' => array('class'),
-  );
-
-  return $plugins;
 }
 
 /**
@@ -91,7 +126,14 @@ function chosen_menu() {
 }
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Attach the generated formular to the forminstance to make the field save our
+ * values in it's instance data column.
+ *
+ * @see hook_field_widget_settings_form
+ *
+ * TODO: Replace CHOSEN_WIDGET constant by supported widgets by plugin.
  */
 function chosen_form_field_ui_field_edit_form_alter(&$form, $form_state) {
   if (isset($form['instance']['widget']['type']['#value'])) {
@@ -99,32 +141,23 @@ function chosen_form_field_ui_field_edit_form_alter(&$form, $form_state) {
     if (in_array($type, unserialize(CHOSEN_WIDGETS))) {
       $field = $form['#field'];
       $instance = field_info_instance($form['instance']['entity_type']['#value'], $form['instance']['field_name']['#value'], $form['instance']['bundle']['#value']);
-      $form['instance'] += chosen_field_widget_settings_form($field, $instance);
+      $form['instance'] += chosen_field_widget_settings_form($instance);
     }
   }
 }
 
 /**
- * Implements hook_field_widget_info_alter().
+ * Implementation of chosen_field_widget_settings_form().
  *
- * A list of settings needed by Chosen module for widgets.
+ * Provides the form array for the field configuration.
+ *
+ * @param $instance
+ *    Field instance definition provided by field_info_instance().
+ *
+ * @return $form
+ *    A renderable form array containing the chosen plugin options.
  */
-// function chosen_field_widget_info_alter(&$info) {
-//   $settings = array(
-//     'apply_chosen' => 0,
-//   );
-
-//   foreach (unserialize(CHOSEN_WIDGETS) as $widget) {
-//     if (isset($info[$widget]['settings'])) {
-//       $info[$widget]['settings'] += $settings;
-//     }
-//   }
-// }
-
-/**
- * Implements hook_field_widget_settings_form().
- */
-function chosen_field_widget_settings_form($field, $instance) {
+function chosen_field_widget_settings_form($instance) {
   $widget = $instance['widget'];
   $settings = $widget['settings'];
 
@@ -147,7 +180,6 @@ function chosen_field_widget_settings_form($field, $instance) {
     '#default_value' => isset($settings['override']) ? $settings['override'] : FALSE,
   );
 
-
   $form['chosen']['chosen_wrapper'] = array(
     '#type' => 'fieldset',
     '#title' => t('Chosen settings'),
@@ -164,14 +196,23 @@ function chosen_field_widget_settings_form($field, $instance) {
   $default_values = _chosen_flattern_default_values($instance['chosen_wrapper']);
   $default_values = _chosen_devide_array_by_plugin($default_values);
   $settings_form = chosen_generate_forms($default_values);
-  // $form = array_merge($form, $settings_form);
 
   $form['chosen']['chosen_wrapper'] += $settings_form;
-
 
   return $form;
 }
 
+/**
+ * Implementation of _chosen_flattern_default_values().
+ *
+ * Helperfunction to build a one dimensional array of all fields.
+ *
+ * @param $default_values
+ *    A plugin sepperated array of fields.
+ *
+ * @return $flattern_values
+ *    All fields in a one dimensional array.
+ */
 function _chosen_flattern_default_values($default_values) {
   $flattern_values = array();
   foreach($default_values as $key => $value) {
@@ -188,6 +229,10 @@ function _chosen_flattern_default_values($default_values) {
 
 /**
  * Implements hook_field_widget_form_alter().
+ *
+ * TODO: This needs to be improved. This is maybe not the correct way.
+ * TODO: When we replace the CHOSEN_WIDGETS constant we have to adjust this
+ *       function.
  */
 function chosen_field_widget_form_alter(&$element, &$form_state, $context) {
   $type = $context['instance']['widget']['type'];
@@ -201,6 +246,11 @@ function chosen_field_widget_form_alter(&$element, &$form_state, $context) {
 
 /**
  * Implements hook_library().
+ *
+ * Register the chosen libraries, provided by the chosen plugins with all it's
+ * custom options. The options need to be extracted from the plugin options
+ * formular if no values have yet been saved, otherwise from the chosen_plugin
+ * variable.
  */
 function chosen_library() {
 
@@ -209,12 +259,10 @@ function chosen_library() {
   foreach (ctools_get_plugins('chosen', 'library') as $plugin_name => $plugin_settings) {
     $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin_name, 'class');
     $plugin = new $plugin_class_name();
-    dsm($plugin->file_name);
 
     $library_path = module_exists('libraries') ? libraries_get_path($plugin->library_name) : 'sites/all/libraries/' . $plugin->directory;
 
-
-
+    // Registerl the library.
     $info[$plugin->library_name] = array(
       'title' => $plugin->title,
       'website' => $plugin->website,
@@ -230,6 +278,7 @@ function chosen_library() {
       $info['chosen']['css'] = array($library_path . '/' . $plugin->css => array());
     }
 
+    // TODO: Refactor this.
     $values = array();
     $value = variable_get('chosen_' . $plugin_name);
     if(!empty($value)) {
@@ -242,9 +291,9 @@ function chosen_library() {
         $values[$key] = $value['#default_value'];
       }
     }
-    dsm($values);
 
-
+    // Provide settings for the library.
+    // TODO: Get the settings from the plugin.
     $module_path = drupal_get_path('module', 'chosen');
     $info['drupal.' . $plugin_name] = array(
       'title' => 'Drupal Chosen integration',
@@ -253,7 +302,6 @@ function chosen_library() {
       'js' => array(
         $module_path . '/chosen.js' => array(),
         array(
-          // TODO: get settings form plugin.
           'data' => array(
             'chosen' => array(
               'selector' => variable_get('chosen_jquery_selector', 'select:visible'),
@@ -279,10 +327,23 @@ function chosen_library() {
         array('chosen', $plugin->library_name),
       ),
     );
-    }
+  }
+
   return $info;
 }
 
+/**
+ * Implementation of _chosen_flattern_options()
+ *
+ * This function collects all field options out of a form array and generates a
+ * one dimensional array.
+ *
+ * @param $options
+ *    The form array provided by a plugin.
+ *
+ * @return
+ *    The flat array of all fields.
+ */
 function _chosen_flattern_options($options) {
   $flat_array = array();
   foreach ($options as $key => $value) {
@@ -298,6 +359,11 @@ function _chosen_flattern_options($options) {
 
 /**
  * Implements hook_element_info_alter().
+ *
+ * Adds a prerender Function which will be called to supported widgets in order
+ * to be able to provide settings per fieldinstance.
+ *
+ * TODO: This has to be generated out of the plugins.
  */
 function chosen_element_info_alter(&$info) {
   $info['select']['#pre_render'][] = 'chosen_pre_render_select';
@@ -309,6 +375,13 @@ function chosen_element_info_alter(&$info) {
 
 /**
  * Implementation of chosen_pre_render_select().
+ *
+ * Atteches the library to the field and pass the fieldinstance related options.
+ *
+ * @see pre_render
+ *
+ * TODO: Get the field specific configuration.
+ * TODO: Pass the correct cpnfiguration.
  */
 function chosen_pre_render_select($element) {
   $field_info = isset($element['#field_name']) ? field_info_field($element['#field_name']) : FALSE;
@@ -345,10 +418,14 @@ function chosen_pre_render_select($element) {
 }
 
 /**
+ * Implementation of chosen_get_chosen_path().
+ *
  * Get the location of the chosen library.
  *
  * @return
  *   The location of the library, or FALSE if the library isn't installed.
+ *
+ * TODO: support library by plugin.
  */
 function chosen_get_chosen_path() {
   $path = FALSE;
@@ -364,31 +441,38 @@ function chosen_get_chosen_path() {
   return $path;
 }
 
-
-
+/**
+ * Implementation of chosen_generate_forms().
+ *
+ * Generates a completed configuration form out of the plugin options.
+ *
+ * @param $default_values
+ *    The default values which will be present in the form.
+ *
+ * @return
+ *    The completed form.
+ */
 function chosen_generate_forms($default_values) {
 
   ctools_include('plugins');
-    foreach (ctools_get_plugins('chosen', 'library') as $plugin => $plugin_settings) {
+  foreach (ctools_get_plugins('chosen', 'library') as $plugin => $plugin_settings) {
     $chosen_plugins[$plugin] = $plugin_settings['name'];
     $chosen_descriptions[$plugin] = $plugin_settings['description'];
   }
 
-    $form['chosen_plugin'] = array(
-      '#type' => 'select',
-      '#title' => t('Select library chosen should use'),
-      '#options' => $chosen_plugins,
-      '#default_value' => isset($default_values['chosen']['plugin']) ? $default_values['chosen']['plugin'] : 'chosen',
-      '#description' => $chosen_descriptions[variable_get('chosen_active_plugin', 'chosen')],
-      '#weight' => 20,
-    );
-
+  $form['chosen_plugin'] = array(
+    '#type' => 'select',
+    '#title' => t('Select library chosen should use'),
+    '#options' => $chosen_plugins,
+    '#default_value' => isset($default_values['chosen']['plugin']) ? $default_values['chosen']['plugin'] : 'chosen',
+    '#description' => $chosen_descriptions[variable_get('chosen_active_plugin', 'chosen')],
+    '#weight' => 20,
+  );
 
   foreach (ctools_get_plugins('chosen', 'library') as $plugin_name => $plugin_settings) {
     $plugin_class_name = ctools_plugin_load_class('chosen', 'library', $plugin_name, 'class');
     $plugin = new $plugin_class_name();
 
-    // dsm($default_values);
     $form[$plugin_name] = array(
       '#type' => 'fieldset',
       '#title' => t($plugin_settings['name'] . ' options'),
@@ -400,9 +484,6 @@ function chosen_generate_forms($default_values) {
       ),
     );
 
-    // TODO: attach default values (existing values).
-    // TODO: Add prefix.
-    // TODO: Save values per plugin in a single variable.
     $fields = _chosen_add_plugin_prefix($plugin->options($default_values[$plugin_name]), $plugin_name);
     foreach ($fields as $option => $values) {
       // Iterate through $values, check if it has ?
@@ -410,10 +491,25 @@ function chosen_generate_forms($default_values) {
       $form[$plugin_name]['#weight'] = 21;
     }
   }
+
   return $form;
 }
 
-
+/**
+ * Implementation of _chosen_add_plugin_prefix().
+ *
+ * Helperfunction to refactor the fields array. Adds plugin namespaces to the
+ * fields. To be able to group them later on.
+ *
+ * @param $array
+ *    Field array.
+ *
+ * @param $plugin_name
+ *    The actual plugin.
+ *
+ * @return $new_array
+ *    Array with plugin namespaces for the fields.
+ */
 function _chosen_add_plugin_prefix($array, $plugin_name) {
   foreach ($array as $key => $value) {
     if (isset($value['#default_value'])) {
