@@ -4,6 +4,9 @@
  * Installation and uninstallation functions.
  */
 
+use Drupal\Core\Url;
+use Drupal\Core\Link;
+
 /**
  * Implements hook_requirements().
  */
@@ -15,8 +18,8 @@ function chosen_requirements($phase) {
   switch ($phase) {
     case 'runtime':
       if (!$chosen_path) {
-        $url = \Drupal\Core\Url::fromUri(CHOSEN_WEBSITE_URL);
-        $link = \Drupal\Core\Link::fromTextAndUrl(t('Chosen JavaScript file'), $url)->toString();
+        $url = Url::fromUri(CHOSEN_WEBSITE_URL);
+        $link = Link::fromTextAndUrl(t('Chosen JavaScript file'), $url)->toString();
 
         $requirements['chosen_js'] = array(
           'title' => t('Chosen JavaScript file'),
