@@ -2,8 +2,8 @@ drupal.chosen:
   remote: https://drupal.org/project/chosen
   version: 1.5.0
   license:
-      name: GNU
-      url: https://www.drupal.org/licensing
+      name: GNU GPL v2
+      url: https://www.drupal.org/about/licensing
       gpl-compatible: true
   js:
     js/chosen.js: {}
