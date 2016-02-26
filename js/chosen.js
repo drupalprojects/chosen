@@ -41,7 +41,7 @@
         // - Tabledrag weights
         // - Elements that have opted-out of Chosen
         // - Elements already processed by Chosen
-        .not('#field-ui-field-overview-form select, #field-ui-display-overview-form select, .wysiwyg, .draggable select[name$="[weight]"], .draggable select[name$="[position]"], .chosen-disable, .chosen-processed')
+        .not('#field-ui-field-storage-add-form select, #entity-form-display-edit-form select, #entity-view-display-edit-form select, .wysiwyg, .draggable select[name$="[weight]"], .draggable select[name$="[position]"], .chosen-disable, .chosen-processed')
         .filter(function() {
           // Filter out select widgets that do not meet the minimum number of
           // options.
