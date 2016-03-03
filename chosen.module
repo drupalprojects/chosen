@@ -22,6 +22,18 @@ function chosen_page_attachments(array &$page) {
   $page['#attached']['library'][] = 'chosen/drupal.chosen';
 
   $chosen_conf = \Drupal::config('chosen.settings');
+
+  $css_disabled_themes = $chosen_conf->get('chosen_disabled_themes');
+  if (empty($css_disabled_themes)) {
+    $css_disabled_themes = array();
+  }
+
+  // Only add the Chosen CSS if it is not disabled for the active theme.
+  $theme_name = \Drupal::theme()->getActiveTheme()->getName();
+  if (!in_array($theme_name, $css_disabled_themes, TRUE)) {
+    $page['#attached']['library'][] = 'chosen_lib/chosen.css';
+  }
+
   $options = array(
     'disable_search' => (bool) $chosen_conf->get('chosen_disable_search'),
     'disable_search_threshold' => (int) $chosen_conf->get('chosen_disable_search_threshold'),

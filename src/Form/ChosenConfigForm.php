@@ -94,7 +94,7 @@ class ChosenConfigForm extends ConfigFormBase {
 
     $form['options'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Chosen options'),
+      '#title' => t('Chosen general options'),
     );
 
     $form['options']['chosen_search_contains'] = array(
@@ -112,11 +112,19 @@ class ChosenConfigForm extends ConfigFormBase {
       '#description' => t('Enable or disable the search box in the results list to filter out possible options.'),
     );
 
-    $form['options']['chosen_use_theme'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Use the default chosen theme'),
-      '#default_value' => $chosen_conf->get('chosen_use_theme'),
-      '#description' => t('Enable or disable the default chosen CSS file. Disable this option if your theme contains custom styles for Chosen replacements.'),
+    $form['theme_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Chosen per theme options'),
+    );
+
+    $default_chosen_disabled_themes = $chosen_conf->get('chosen_disabled_themes');
+    $default_chosen_disabled_themes = is_array($default_chosen_disabled_themes) ? $default_chosen_disabled_themes : array();
+    $form['theme_options']['chosen_disabled_themes'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Disable the default Chosen theme for the following themes'),
+      '#options' => $this->chosen_enabled_themes_options(),
+      '#default_value' => $default_chosen_disabled_themes,
+      '#description' => t('Enable or disable the default Chosen CSS file. Select a theme if it contains custom styles for Chosen replacements.'),
     );
 
     $form['strings'] = array(
@@ -172,7 +180,7 @@ class ChosenConfigForm extends ConfigFormBase {
       ->set('chosen_jquery_selector', $form_state->getValue('chosen_jquery_selector'))
       ->set('chosen_search_contains', $form_state->getValue('chosen_search_contains'))
       ->set('chosen_disable_search', $form_state->getValue('chosen_disable_search'))
-      ->set('chosen_use_theme', $form_state->getValue('chosen_use_theme'))
+      ->set('chosen_disabled_themes', $form_state->getValue('chosen_disabled_themes'))
       ->set('chosen_placeholder_text_multiple', $form_state->getValue('chosen_placeholder_text_multiple'))
       ->set('chosen_placeholder_text_single', $form_state->getValue('chosen_placeholder_text_single'))
       ->set('chosen_no_results_text', $form_state->getValue('chosen_no_results_text'));
@@ -180,6 +188,29 @@ class ChosenConfigForm extends ConfigFormBase {
     $config->save();
 
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Helper function to get options for enabled themes
+   */
+  private function chosen_enabled_themes_options() {
+    $options = array();
+
+    // Get a list of available themes.
+    $theme_handler = \Drupal::service('theme_handler');
+
+    $themes = $theme_handler->listInfo();
+
+    foreach ($themes as $theme_name => $theme) {
+      // Only create options for enabled themes
+      if ($theme->status) {
+        if (!(isset($theme->info['hidden']) && $theme->info['hidden'])) {
+          $options[$theme_name] = $theme->info['name'];
+        }
+      }
+    }
+
+    return $options;
   }
 
 }

@@ -10,7 +10,7 @@
 /**
  * Implements hook_library_info_alter().
  */
-function chosen_lib_info_alter(array &$libraries, $module) {
+function chosen_lib_library_info_alter(array &$libraries, $module) {
   if ('chosen_lib' == $module) {
     if (isset($libraries['chosen'])) {
       // Set chosen library path.
@@ -21,7 +21,7 @@ function chosen_lib_info_alter(array &$libraries, $module) {
       );
 
       $chosen_css = $chosen_js_path  . '/chosen.css';
-      $libraries['chosen']['css']['component'][$chosen_css] = array();
+      $libraries['chosen.css']['css']['component'][$chosen_css] = array();
     }
   }
 }

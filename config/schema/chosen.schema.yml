@@ -23,9 +23,11 @@ chosen.settings:
     chosen_disable_search:
       type: boolean
       label: 'Disable search box'
-    chosen_use_theme:
-      type: boolean
-      label: 'Use the default chosen theme'
+    chosen_disabled_themes:
+      type: sequence
+      label: 'Disable the default Chosen theme for the following themes'
+      sequence:
+        type: string
     chosen_placeholder_text_multiple:
       type: label
       label: 'Placeholder text of multiple selects'

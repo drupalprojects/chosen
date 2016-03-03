@@ -7,8 +7,11 @@ chosen:
       gpl-compatible: true
   js:
     /libraries/chosen/chosen.jquery.min.js: { minified: true }
+  dependencies:
+    - core/jquery
+
+chosen.css:
+  version: 1.5.0
   css:
     component:
       /libraries/chosen/chosen.css: {}
-  dependencies:
-    - core/jquery
