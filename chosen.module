@@ -105,10 +105,14 @@ function chosen_pre_render_select($element) {
   }
 
   if (isset($element['#field_name']) && !empty($element['#multiple'])) {
-    if (isset($element['#entity_type']) && isset($element['#field_name'])) {
-      $field = FieldConfig::loadByName($element['#entity_type'], $element['#field_name']);
-      if ($field['cardinality'] != FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED && $field['cardinality'] > 1) {
-        $element['#attributes']['data-cardinality'] = $field['cardinality'];
+    if (isset($element['#entity_type']) && isset($element['#bundle']) && isset($element['#field_name'])) {
+      // Remove '_none' from multi-select options.
+      unset($element['#options']['_none']);
+
+      $field = FieldConfig::loadByName($element['#entity_type'], $element['#bundle'], $element['#field_name'])->getFieldStorageDefinition();
+      $cardinality = $field->getCardinality();
+      if ($cardinality != FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED && $cardinality > 1) {
+        $element['#attributes']['data-cardinality'] = $cardinality;
       }
     }
   }
