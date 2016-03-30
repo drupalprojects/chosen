@@ -23,7 +23,7 @@ function chosen_page_attachments(array &$page) {
 
   $chosen_conf = \Drupal::config('chosen.settings');
 
-  $css_disabled_themes = $chosen_conf->get('chosen_disabled_themes');
+  $css_disabled_themes = $chosen_conf->get('disabled_themes');
   if (empty($css_disabled_themes)) {
     $css_disabled_themes = array();
   }
@@ -35,20 +35,20 @@ function chosen_page_attachments(array &$page) {
   }
 
   $options = array(
-    'disable_search' => (bool) $chosen_conf->get('chosen_disable_search'),
-    'disable_search_threshold' => (int) $chosen_conf->get('chosen_disable_search_threshold'),
-    'search_contains' => (bool) $chosen_conf->get('chosen_search_contains'),
-    'placeholder_text_multiple' => $chosen_conf->get('chosen_placeholder_text_multiple'),
-    'placeholder_text_single' => $chosen_conf->get('chosen_placeholder_text_single'),
-    'no_results_text' => $chosen_conf->get('chosen_no_results_text'),
+    'disable_search' => (bool) $chosen_conf->get('disable_search'),
+    'disable_search_threshold' => (int) $chosen_conf->get('disable_search_threshold'),
+    'search_contains' => (bool) $chosen_conf->get('search_contains'),
+    'placeholder_text_multiple' => $chosen_conf->get('placeholder_text_multiple'),
+    'placeholder_text_single' => $chosen_conf->get('placeholder_text_single'),
+    'no_results_text' => $chosen_conf->get('no_results_text'),
     'inherit_select_classes' => TRUE,
   );
 
   $page['#attached']['drupalSettings']['chosen'] = array(
-    'selector' => $chosen_conf->get('chosen_jquery_selector'),
-    'minimum_single' => (int) $chosen_conf->get('chosen_minimum_single'),
-    'minimum_multiple' => (int) $chosen_conf->get('chosen_minimum_multiple'),
-    'minimum_width' => (int) $chosen_conf->get('chosen_minimum_width'),
+    'selector' => $chosen_conf->get('jquery_selector'),
+    'minimum_single' => (int) $chosen_conf->get('minimum_single'),
+    'minimum_multiple' => (int) $chosen_conf->get('minimum_multiple'),
+    'minimum_width' => (int) $chosen_conf->get('minimum_width'),
     'options' => $options,
   );
 }

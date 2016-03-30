@@ -41,3 +41,20 @@ function chosen_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Renames config to remove redundant 'chosen_' prefix.
+ */
+function chosen_update_8001() {
+  $config = \Drupal::configFactory()->getEditable('chosen.settings');
+  $raw_data = $config->getRawData();
+  foreach ($raw_data as $name => $data) {
+    if (strpos($name, 'chosen_') === 0) {
+      unset($raw_data[$name]);
+      $name = str_replace('chosen_', '', $name);
+      $raw_data[$name] = $data;
+    }
+  }
+  $config->setData($raw_data);
+  $config->save();
+}
