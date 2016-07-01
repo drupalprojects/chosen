@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\chosen\Form\ChosenConfigForm.
- */
 
 namespace Drupal\chosen\Form;
 
