@@ -1,4 +1,4 @@
-(function ($) {
+(function ($, Drupal) {
   'use strict';
   Drupal.behaviors.chosen = {
     attach: function (context, settings) {
@@ -61,4 +61,4 @@
         });
     }
   };
-})(jQuery);
+})(jQuery, Drupal);
