@@ -75,10 +75,9 @@ class ChosenConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => t('Minimum width of widget'),
       '#field_suffix' => 'px',
-      '#required' => TRUE,
       '#size' => 3,
       '#default_value' => $chosen_conf->get('minimum_width'),
-      '#description' => t('The minimum width of the Chosen widget.'),
+      '#description' => t('The minimum width of the Chosen widget. Leave blank to have chosen determine this.'),
     );
 
     $form['jquery_selector'] = array(
