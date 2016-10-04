@@ -35,5 +35,6 @@
     "psr-4": {
       "Drupal\\chosen\\": "src/"
     }
-  }
+  },
+  "minimum-stability": "dev"
 }
