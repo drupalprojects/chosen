@@ -103,8 +103,8 @@ function chosen_pre_render_select($element) {
   chosen_attach_library($element);
 
   // Right to Left Support.
-  $language_direction =  \Drupal::languageManager()->getCurrentLanguage()->getDirection();
-  if(LanguageInterface::DIRECTION_RTL == $language_direction) {
+  $language_direction = \Drupal::languageManager()->getCurrentLanguage()->getDirection();
+  if (LanguageInterface::DIRECTION_RTL == $language_direction) {
     $element['#attributes']['class'][] = 'chosen-rtl';
   }
 
