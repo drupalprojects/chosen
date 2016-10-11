@@ -10,6 +10,7 @@
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldConfig;
+use Drupal\Core\Language\LanguageInterface;
 
 /**
  * Define chosen library url.
@@ -85,8 +86,8 @@ function chosen_pre_render_select($element) {
   }
 
   if (isset($element['#field_name']) && !empty($element['#multiple'])) {
-      // Remove '_none' from multi-select options.
-      unset($element['#options']['_none']);
+    // Remove '_none' from multi-select options.
+    unset($element['#options']['_none']);
 
     if (isset($element['#entity_type']) && isset($element['#bundle']) && isset($element['#field_name'])) {
       // Set data-cardinality for fields that aren't unlimited.
@@ -100,6 +101,12 @@ function chosen_pre_render_select($element) {
 
   // Attach the library.
   chosen_attach_library($element);
+
+  // Right to Left Support.
+  $language_direction =  \Drupal::languageManager()->getCurrentLanguage()->getDirection();
+  if(LanguageInterface::DIRECTION_RTL == $language_direction) {
+    $element['#attributes']['class'][] = 'chosen-rtl';
+  }
 
   return $element;
 }
