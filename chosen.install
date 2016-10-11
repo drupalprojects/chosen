@@ -58,3 +58,12 @@ function chosen_update_8001() {
   $config->setData($raw_data);
   $config->save();
 }
+
+/**
+ * Set default value for chosen for admin pages and/or front end pages.
+ */
+function chosen_update_8002() {
+  $config = \Drupal::configFactory()->getEditable('chosen.settings');
+  $config->set('chosen_include', CHOSEN_INCLUDE_EVERYWHERE);
+  $config->save();
+}

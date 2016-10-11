@@ -122,6 +122,17 @@ class ChosenConfigForm extends ConfigFormBase {
       '#description' => t('Enable or disable the default Chosen CSS file. Select a theme if it contains custom styles for Chosen replacements.'),
     );
 
+    $form['options']['chosen_include'] = array(
+      '#type' => 'radios',
+      '#title' => t('Use chosen for admin pages and/or front end pages'),
+      '#options' => array(
+        CHOSEN_INCLUDE_EVERYWHERE => t('Include Chosen on every page'),
+        CHOSEN_INCLUDE_ADMIN => t('Include Chosen only on admin pages'),
+        CHOSEN_INCLUDE_NO_ADMIN => t('Include Chosen only on front end pages'),
+      ),
+      '#default_value' => $chosen_conf->get('chosen_include'),
+    );
+
     $form['strings'] = array(
       '#type' => 'fieldset',
       '#title' => t('Chosen strings'),
@@ -176,6 +187,7 @@ class ChosenConfigForm extends ConfigFormBase {
       ->set('search_contains', $form_state->getValue('search_contains'))
       ->set('disable_search', $form_state->getValue('disable_search'))
       ->set('disabled_themes', $form_state->getValue('disabled_themes'))
+      ->set('chosen_include', $form_state->getValue('chosen_include'))
       ->set('placeholder_text_multiple', $form_state->getValue('placeholder_text_multiple'))
       ->set('placeholder_text_single', $form_state->getValue('placeholder_text_single'))
       ->set('no_results_text', $form_state->getValue('no_results_text'));
