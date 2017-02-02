@@ -14,13 +14,55 @@
      (requires administer site configuration permission)
 
 -- INSTALLATION VIA COMPOSER --
+  It is assumed you are installing Drupal through Composer using the Drupal
+  Composer facade. See https://www.drupal.org/docs/develop/using-composer/using-composer-to-manage-drupal-site-dependencies#drupal-packagist
 
-  If you are using Composer to manage your site's dependencies, then the Chosen plugin
-  will automatically be downloaded to `libraries/chosen`.
+  The Chosen JavaScript library does not support composer so manual steps are
+  required in order to install it through this method.
 
-  Currently there is an issue with composer downloading to the wrong
-  directory. More information in #19, #27, #28 in:
-  https://www.drupal.org/node/2706433
+  First, copy the following snippet into your project's composer.json file so
+  the correct package is downloaded:
+
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "harvesthq/chosen",
+        "version": "1.6.1",
+        "type": "drupal-library",
+        "dist": {
+          "url": "https://github.com/harvesthq/chosen/releases/download/v1.6.1/chosen_v1.6.1.zip",
+          "type": "zip"
+        },
+        "require": {
+            "composer/installers": "^1.2.0"
+        }
+      }
+    }
+  ]
+
+  Next, the following snippet must be added into your project's composer.json
+  file so the javascript library is installed into the correct location:
+
+  "extra": {
+      "installer-paths": {
+          "libraries/{$name}": ["type:drupal-library"]
+      }
+  }
+
+  If there are already 'repositories' and/or 'extra' entries in the
+  composer.json, merge these new entries with the already existing entries.
+
+  After that, run:
+
+  $ composer require harvesthq/chosen
+  $ composer require drupal/chosen
+
+  The first uses the manual entries you made to install the JavaScript library,
+  the second adds the Drupal module.
+
+  Note: the requirement on the library is not in the module's composer.json
+  because that would cause problems with automated testing.
 
 -- INSTALLATION VIA DRUSH --
 
