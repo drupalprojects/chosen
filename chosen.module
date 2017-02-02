@@ -33,6 +33,10 @@ function chosen_element_info_alter(&$info) {
   if (\Drupal::moduleHandler()->moduleExists('select_or_other')) {
     $info['select_or_other']['#pre_render'][] = 'chosen_pre_render_select_or_other';
   }
+
+  if (\Drupal::moduleHandler()->moduleExists('synonyms')) {
+    $info['synonyms_entity_select']['#pre_render'][] = 'chosen_pre_render_select';
+  }
 }
 
 /**
