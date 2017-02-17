@@ -38,8 +38,8 @@ class ChosenConfigForm extends ConfigFormBase {
       $url = Url::fromUri(CHOSEN_WEBSITE_URL);
       $link = Link::fromTextAndUrl($this->t('Chosen JavaScript file'), $url)->toString();
 
-      drupal_set_message($this->t('The library could not be detected. You need to download the !chosen and extract the entire contents of the archive into the %path directory on your server.',
-        array('!chosen' => $link, '%path' => 'libraries')
+      drupal_set_message($this->t('The library could not be detected. You need to download the @chosen and extract the entire contents of the archive into the %path directory on your server.',
+        array('@chosen' => $link, '%path' => 'libraries')
       ), 'error');
       return $form;
     }
