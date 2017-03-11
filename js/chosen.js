@@ -31,10 +31,20 @@
         return options;
       };
 
+      /**
+       * Binds events triggered by states.js to chosen.
+       */
+      var bindStates = function($el){
+        $(document).bind('state:disabled', function () {
+            $el.trigger("chosen:updated");
+        });
+      };
+
       // Process elements that have opted-in for Chosen.
       $('select.chosen-enable', context).once('chosen').each(function () {
         options = getElementOptions(this);
         $(this).chosen(options);
+        bindStates($(this));
       });
 
       $(selector, context)
@@ -60,6 +70,7 @@
         .once('chosen').each(function () {
           options = getElementOptions(this);
           $(this).chosen(options);
+          bindStates($(this));
         });
     }
   };
