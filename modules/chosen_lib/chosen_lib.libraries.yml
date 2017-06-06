@@ -5,13 +5,11 @@ chosen:
       name: MIT
       url: https://github.com/harvesthq/chosen/blob/master/LICENSE.md
       gpl-compatible: true
-  js:
-    /libraries/chosen/chosen.jquery.min.js: { minified: true }
+  js: {}
   dependencies:
     - core/jquery
 
 chosen.css:
   version: 1.6.1
   css:
-    component:
-      /libraries/chosen/chosen.css: {}
+    component: {}
