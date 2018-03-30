@@ -2,16 +2,44 @@
 
 namespace Drupal\chosen\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\system\Form;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Extension\ThemeHandler;
 
 /**
  * Implements a ChosenConfig form.
  */
 class ChosenConfigForm extends ConfigFormBase {
+
+  /**
+   * Theme handler.
+   *
+   * @var \Drupal\Core\Extension\ThemeHandler
+   *   Theme handler.
+   */
+  protected $themeHandler;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, ThemeHandler $themeHandler) {
+    parent::__construct($config_factory);
+    $this->themeHandler = $themeHandler;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('theme_handler')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -212,9 +240,7 @@ class ChosenConfigForm extends ConfigFormBase {
     $options = [];
 
     // Get a list of available themes.
-    $theme_handler = \Drupal::service('theme_handler');
-
-    $themes = $theme_handler->listInfo();
+    $themes = $this->themeHandler->listInfo();
 
     foreach ($themes as $theme_name => $theme) {
       // Only create options for enabled themes.
