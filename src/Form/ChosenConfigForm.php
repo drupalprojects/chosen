@@ -7,6 +7,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Extension\ThemeHandler;
 
@@ -14,6 +15,13 @@ use Drupal\Core\Extension\ThemeHandler;
  * Implements a ChosenConfig form.
  */
 class ChosenConfigForm extends ConfigFormBase {
+
+  /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
 
   /**
    * Theme handler.
@@ -26,9 +34,10 @@ class ChosenConfigForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ThemeHandler $themeHandler) {
+  public function __construct(ConfigFactoryInterface $config_factory, ThemeHandler $themeHandler, MessengerInterface $messenger) {
     parent::__construct($config_factory);
     $this->themeHandler = $themeHandler;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -37,7 +46,8 @@ class ChosenConfigForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('theme_handler')
+      $container->get('theme_handler'),
+      $container->get('messenger')
     );
   }
 
@@ -66,9 +76,9 @@ class ChosenConfigForm extends ConfigFormBase {
       $url = Url::fromUri(CHOSEN_WEBSITE_URL);
       $link = Link::fromTextAndUrl($this->t('Chosen JavaScript file'), $url)->toString();
 
-      drupal_set_message($this->t('The library could not be detected. You need to download the @chosen and extract the entire contents of the archive into the %path directory on your server.',
+      $this->messenger->addError($this->t('The library could not be detected. You need to download the @chosen and extract the entire contents of the archive into the %path directory on your server.',
         ['@chosen' => $link, '%path' => 'libraries']
-      ), 'error');
+      ));
       return $form;
     }
 
