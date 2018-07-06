@@ -5,4 +5,4 @@ configure: chosen.admin
 core: 8.x
 type: module
 dependencies:
-  - chosen
+  - chosen:chosen
